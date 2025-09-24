@@ -164,6 +164,25 @@
             color: #7f8c8d;
             margin-top: 5px;
         }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -195,6 +214,22 @@
     </div>
 
     <script>
+        // Get the base URL for the site (handles both local and GitHub Pages)
+        function getBaseUrl() {
+            // Check if we're on GitHub Pages
+            if (window.location.hostname.includes('github.io')) {
+                // Extract repository name from pathname
+                const pathParts = window.location.pathname.split('/').filter(p => p);
+                if (pathParts.length > 0 && !pathParts[0].includes('.')) {
+                    return `/${pathParts[0]}`;
+                }
+            }
+            // Local development or custom domain
+            return '';
+        }
+        
+        const baseUrl = getBaseUrl();
+        
         // Document structure - define all documents here
         const documents = {
             userNeeds: [
@@ -257,8 +292,20 @@
             content.style.display = 'none';
             
             try {
-                const response = await fetch(path);
-                if (!response.ok) throw new Error('Failed to load document');
+                // Construct the full URL for fetching the document
+                let fetchPath = path;
+                
+                // If we have a base URL (GitHub Pages), prepend it
+                if (baseUrl) {
+                    fetchPath = `${baseUrl}/${path}`;
+                }
+                
+                console.log('Attempting to load:', fetchPath);
+                
+                const response = await fetch(fetchPath);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 
                 const markdown = await response.text();
                 const html = marked.parse(markdown);
@@ -275,13 +322,38 @@
                 // Update URL hash
                 window.location.hash = path;
             } catch (error) {
+                console.error('Failed to load document:', error);
                 loading.style.display = 'none';
                 content.style.display = 'block';
                 
-                // Safely handle error display - prevent XSS in path variable
-                content.innerHTML = '<h2>Error</h2><p></p>';
-                const errorParagraph = content.querySelector('p');
-                errorParagraph.textContent = `Failed to load document: ${path}`;
+                // Safely handle error display - build DOM nodes to prevent XSS
+                content.innerHTML = '';
+                
+                const errorTitle = document.createElement('h2');
+                errorTitle.textContent = 'Error Loading Document';
+                content.appendChild(errorTitle);
+                
+                const errorPath = document.createElement('p');
+                errorPath.innerHTML = 'Failed to load: <code></code>';
+                errorPath.querySelector('code').textContent = path;
+                content.appendChild(errorPath);
+                
+                const errorMessage = document.createElement('p');
+                errorMessage.textContent = `Error: ${error.message}`;
+                content.appendChild(errorMessage);
+                
+                const troubleshootingTitle = document.createElement('p');
+                troubleshootingTitle.style.marginTop = '20px';
+                troubleshootingTitle.innerHTML = '<strong>Troubleshooting:</strong>';
+                content.appendChild(troubleshootingTitle);
+                
+                const troubleshootingList = document.createElement('ul');
+                troubleshootingList.innerHTML = `
+                    <li>Ensure the file exists at the correct path</li>
+                    <li>Check that GitHub Pages is properly configured</li>
+                    <li>Verify the repository settings point to the /docs folder</li>
+                `;
+                content.appendChild(troubleshootingList);
             }
         }
         
@@ -334,11 +406,11 @@
                 path = currentDir + '/' + path;
             }
             
-            // Clean up double slashes
+            // Clean up double slashes and leading slashes
             return path.replace(/\/+/g, '/').replace(/^\//, '');
         }
         
-        // Show home content - sanitized to prevent XSS
+        // Show home content
         function showHome() {
             const loading = document.getElementById('loading');
             const content = document.getElementById('content');
@@ -362,6 +434,19 @@
                             <div class="stat-label">Product Requirements</div>
                         </div>
                     </div>
+                    
+                    <h2 style="margin-top: 50px;">Getting Started</h2>
+                    <p style="text-align: left; max-width: 600px; margin: 20px auto;">
+                        This documentation template provides a structured approach to managing quality system requirements:
+                    </p>
+                    <ul style="text-align: left; max-width: 600px; margin: 0 auto;">
+                        <li><strong>User Needs:</strong> High-level requirements from the user's perspective</li>
+                        <li><strong>Product Requirements:</strong> Detailed technical specifications that implement user needs</li>
+                    </ul>
+                    
+                    <p style="text-align: left; max-width: 600px; margin: 20px auto;">
+                        Navigate using the sidebar to explore the documentation. Each requirement is traceable and includes related items for complete visibility.
+                    </p>
                 </div>
             `;
             
@@ -385,6 +470,7 @@
         
         // Initialize on load
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('Base URL detected:', baseUrl || '(none - local development)');
             initNavigation();
             
             const hash = window.location.hash.slice(1);
