@@ -1,0 +1,15 @@
+# SWR-014: Joao Rex
+
+## Requirement Statement
+The system shall implement pattern matching utilities for password validation using regular expressions.
+
+## Parent Product Requirement
+[PRQ-008](../product_requirements/PRQ-008.md): Password Requirements
+
+## Technical Details
+- Regex pattern definitions
+- Validation utilities
+- Pattern testing framework
+
+## Category
+Library
