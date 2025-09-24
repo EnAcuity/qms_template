@@ -40,35 +40,99 @@
         
         .nav-section {
             margin-bottom: 30px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+        }
+        
+        .nav-section.collapsed .nav-list {
+            display: none;
+        }
+        
+        .nav-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            background: rgba(52, 73, 94, 0.3);
+            border-radius: 4px;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+        }
+        
+        .nav-section-header:hover {
+            background: rgba(52, 73, 94, 0.5);
         }
         
         .nav-section h3 {
             color: #3498db;
             font-size: 0.9rem;
             text-transform: uppercase;
-            margin-bottom: 10px;
+            margin: 0;
         }
         
-        .nav-section ul {
+        .collapse-icon {
+            color: #3498db;
+            font-size: 0.9rem;
+            transition: transform 0.3s;
+        }
+        
+        .nav-section.collapsed .collapse-icon {
+            transform: rotate(-90deg);
+        }
+        
+        .nav-list {
             list-style: none;
         }
         
-        .nav-section li {
+        .nav-list li {
             margin-bottom: 5px;
+            position: relative;
         }
         
-        .nav-section a {
+        .nav-list a {
             color: #ecf0f1;
             text-decoration: none;
             padding: 8px 12px;
             display: block;
             border-radius: 4px;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, border 0.3s;
+            border: 2px solid transparent;
         }
         
-        .nav-section a:hover,
-        .nav-section a.active {
+        .nav-list a:hover {
             background-color: #34495e;
+        }
+        
+        .nav-list a.active {
+            background-color: #34495e;
+            border-color: #3498db;
+        }
+        
+        .nav-list a.highlighted {
+            background-color: rgba(52, 152, 219, 0.3);
+            border-color: #3498db;
+        }
+        
+        .nav-list a.parent-highlighted {
+            background-color: rgba(231, 76, 60, 0.3);
+            border-color: #e74c3c;
+        }
+        
+        .association-badge {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+        
+        .association-badge.parent {
+            background: #e74c3c;
         }
         
         .content {
@@ -83,6 +147,38 @@
             border-radius: 8px;
             padding: 30px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .traceability-info {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .traceability-info h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .traceability-info ul {
+            list-style: none;
+            margin-left: 0;
+        }
+        
+        .traceability-info li {
+            padding: 5px 0;
+        }
+        
+        .traceability-info a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .traceability-info a:hover {
+            text-decoration: underline;
         }
         
         #loading {
@@ -190,23 +286,34 @@
         <div class="sidebar">
             <h2>QMS Documentation</h2>
             
-            <div class="nav-section">
-                <h3>User Needs</h3>
-                <ul id="userNeedsList">
+            <div class="nav-section" id="userNeedsSection">
+                <div class="nav-section-header" onclick="toggleSection('userNeedsSection')">
+                    <h3>User Needs</h3>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <ul class="nav-list" id="userNeedsList">
                     <li style="color: #7f8c8d; padding: 8px 12px;">Loading...</li>
                 </ul>
             </div>
             
-            <div class="nav-section">
-                <h3>Product Requirements</h3>
-                <ul id="productReqsList">
+
+            <div class="nav-section" id="productReqsSection">
+                <div class="nav-section-header" onclick="toggleSection('productReqsSection')">
+                    <h3>Product Requirements</h3>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <ul class="nav-list" id="productReqsList">
                     <li style="color: #7f8c8d; padding: 8px 12px;">Loading...</li>
                 </ul>
             </div>
             
-            <div class="nav-section">
-                <h3>Software Requirements</h3>
-                <ul id="softwareReqsList">
+
+            <div class="nav-section" id="softwareReqsSection">
+                <div class="nav-section-header" onclick="toggleSection('softwareReqsSection')">
+                    <h3>Software Requirements</h3>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <ul class="nav-list" id="softwareReqsList">
                     <li style="color: #7f8c8d; padding: 8px 12px;">Loading...</li>
                 </ul>
             </div>
@@ -228,6 +335,15 @@
             softwareRequirements: []
         };
         
+
+        // Associations mapping
+        const associations = {
+            swrToPrq: {},  // SWR-001: PRQ-001
+            prqToUn: {},   // PRQ-001: UN-001
+            prqToSwrs: {}, // PRQ-001: [SWR-001, SWR-002, ...]
+            unToPrqs: {}   // UN-001: [PRQ-001, PRQ-008, ...]
+        };
+        
         // Get the base URL for the site (handles both local and GitHub Pages)
         function getBaseUrl() {
             if (window.location.hostname.includes('github.io')) {
@@ -241,9 +357,59 @@
         
         const baseUrl = getBaseUrl();
         
+
+        // Toggle section collapse
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle('collapsed');
+        }
+        
         // Extract ID from filename (e.g., "UN-001.md" -> "UN-001")
         function extractIdFromFilename(filename) {
             return filename.replace('.md', '');
+        }
+        
+        // Extract associations from markdown content
+        async function extractAssociationsFromMarkdown(path, id, type) {
+            try {
+                const fetchPath = baseUrl ? `${baseUrl}/${path}` : path;
+                const response = await fetch(fetchPath);
+                if (!response.ok) return;
+                
+                const content = await response.text();
+                
+                if (type === 'softwareRequirements') {
+                    // Extract parent PRQ from SWR files
+                    const prqMatch = content.match(/\[PRQ-\d+\]/);
+                    if (prqMatch) {
+                        const prqId = prqMatch[0].slice(1, -1);
+                        associations.swrToPrq[id] = prqId;
+                        if (!associations.prqToSwrs[prqId]) {
+                            associations.prqToSwrs[prqId] = [];
+                        }
+                        associations.prqToSwrs[prqId].push(id);
+                    }
+                } else if (type === 'productRequirements') {
+                    // Extract parent UN from PRQ files
+                    const unMatch = content.match(/\[UN-\d+\]/);
+                    if (unMatch) {
+                        const unId = unMatch[0].slice(1, -1);
+                        associations.prqToUn[id] = unId;
+                        if (!associations.unToPrqs[unId]) {
+                            associations.unToPrqs[unId] = [];
+                        }
+                        associations.unToPrqs[unId].push(id);
+                    }
+                    
+                    // Extract associated SWRs
+                    const swrMatches = content.match(/\[SWR-\d+\]/g);
+                    if (swrMatches) {
+                        associations.prqToSwrs[id] = swrMatches.map(match => match.slice(1, -1));
+                    }
+                }
+            } catch (error) {
+                console.error(`Failed to extract associations from ${path}:`, error);
+            }
         }
         
         // Extract title from markdown content
@@ -293,6 +459,7 @@
                                 const path = `${directory}/${item.name}`;
                                 const id = extractIdFromFilename(item.name);
                                 const title = await extractTitleFromMarkdown(path) || item.name.replace('.md', '');
+                                await extractAssociationsFromMarkdown(path, id, category);
                                 files.push({ id, title, path });
                             }
                         }
@@ -322,6 +489,7 @@
                     const response = await fetch(fetchPath, { method: 'HEAD' });
                     if (response.ok || response.status === 200) {
                         const title = await extractTitleFromMarkdown(path) || id;
+                        await extractAssociationsFromMarkdown(path, id, category);
                         files.push({ id, title, path });
                     }
                 } catch (e) {
@@ -330,6 +498,114 @@
             }
             
             return files;
+        }
+        
+        // Clear all highlights
+        function clearHighlights() {
+            document.querySelectorAll('.nav-list a').forEach(a => {
+                a.classList.remove('highlighted', 'parent-highlighted');
+                // Remove any badges
+                const badges = a.querySelectorAll('.association-badge');
+                badges.forEach(badge => badge.remove());
+            });
+        }
+        
+        // Highlight associated items
+        function highlightAssociations(id, type) {
+            clearHighlights();
+            
+            if (type === 'softwareRequirements') {
+                // Get parent PRQ
+                const prqId = associations.swrToPrq[id];
+                if (prqId) {
+                    const prqElement = document.querySelector(`a[data-id="${prqId}"]`);
+                    if (prqElement) {
+                        prqElement.classList.add('highlighted');
+                        const badge = document.createElement('span');
+                        badge.className = 'association-badge';
+                        badge.textContent = 'Parent';
+                        prqElement.appendChild(badge);
+                        
+                        // Expand PRQ section if collapsed
+                        const prqSection = document.getElementById('productReqsSection');
+                        if (prqSection.classList.contains('collapsed')) {
+                            prqSection.classList.remove('collapsed');
+                        }
+                    }
+                    
+                    // Get grandparent UN
+                    const unId = associations.prqToUn[prqId];
+                    if (unId) {
+                        const unElement = document.querySelector(`a[data-id="${unId}"]`);
+                        if (unElement) {
+                            unElement.classList.add('parent-highlighted');
+                            const badge = document.createElement('span');
+                            badge.className = 'association-badge parent';
+                            badge.textContent = 'Parent';
+                            unElement.appendChild(badge);
+                            
+                            // Expand UN section if collapsed
+                            const unSection = document.getElementById('userNeedsSection');
+                            if (unSection.classList.contains('collapsed')) {
+                                unSection.classList.remove('collapsed');
+                            }
+                        }
+                    }
+                }
+            } else if (type === 'productRequirements') {
+                // Highlight parent UN
+                const unId = associations.prqToUn[id];
+                if (unId) {
+                    const unElement = document.querySelector(`a[data-id="${unId}"]`);
+                    if (unElement) {
+                        unElement.classList.add('parent-highlighted');
+                        const badge = document.createElement('span');
+                        badge.className = 'association-badge parent';
+                        badge.textContent = 'Parent';
+                        unElement.appendChild(badge);
+                        
+                        // Expand UN section if collapsed
+                        const unSection = document.getElementById('userNeedsSection');
+                        if (unSection.classList.contains('collapsed')) {
+                            unSection.classList.remove('collapsed');
+                        }
+                    }
+                }
+                
+                // Highlight child SWRs
+                const swrs = associations.prqToSwrs[id] || [];
+                swrs.forEach(swrId => {
+                    const swrElement = document.querySelector(`a[data-id="${swrId}"]`);
+                    if (swrElement) {
+                        swrElement.classList.add('highlighted');
+                    }
+                });
+                
+                if (swrs.length > 0) {
+                    // Expand SWR section if collapsed
+                    const swrSection = document.getElementById('softwareReqsSection');
+                    if (swrSection.classList.contains('collapsed')) {
+                        swrSection.classList.remove('collapsed');
+                    }
+                }
+            } else if (type === 'userNeeds') {
+                // Highlight child PRQs
+                const prqs = associations.unToPrqs[id] || [];
+                prqs.forEach(prqId => {
+                    const prqElement = document.querySelector(`a[data-id="${prqId}"]`);
+                    if (prqElement) {
+                        prqElement.classList.add('highlighted');
+                    }
+                });
+                
+                if (prqs.length > 0) {
+                    // Expand PRQ section if collapsed
+                    const prqSection = document.getElementById('productReqsSection');
+                    if (prqSection.classList.contains('collapsed')) {
+                        prqSection.classList.remove('collapsed');
+                    }
+                }
+            }
         }
         
         // Initialize navigation dynamically
@@ -345,16 +621,18 @@
             documents.softwareRequirements.sort((a, b) => a.id.localeCompare(b.id));
             
             // Populate navigation lists
-            populateNavList('userNeedsList', documents.userNeeds);
-            populateNavList('productReqsList', documents.productRequirements);
-            populateNavList('softwareReqsList', documents.softwareRequirements);
+            populateNavList('userNeedsList', documents.userNeeds, 'userNeeds');
+            populateNavList('productReqsList', documents.productRequirements, 'productRequirements');
+            populateNavList('softwareReqsList', documents.softwareRequirements, 'softwareRequirements');
+
             
             // Show home content
             showHome();
         }
         
         // Populate a navigation list
-        function populateNavList(listId, items) {
+
+        function populateNavList(listId, items, type) {
             const list = document.getElementById(listId);
             list.innerHTML = ''; // Clear loading message
             
@@ -367,15 +645,19 @@
                 return;
             }
             
+
             items.forEach(doc => {
                 const li = document.createElement('li');
                 const a = document.createElement('a');
                 a.href = `#${doc.path}`;
+                a.setAttribute('data-id', doc.id);
+                a.setAttribute('data-type', type);
                 a.textContent = `${doc.id}: ${doc.title}`;
                 a.onclick = (e) => {
                     e.preventDefault();
-                    loadDocument(doc.path);
+                    loadDocument(doc.path, doc.id, type);
                     setActiveLink(a);
+                    highlightAssociations(doc.id, type);
                 };
                 li.appendChild(a);
                 list.appendChild(li);
@@ -384,12 +666,93 @@
         
         // Set active link
         function setActiveLink(element) {
-            document.querySelectorAll('.nav-section a').forEach(a => a.classList.remove('active'));
+            document.querySelectorAll('.nav-list a').forEach(a => a.classList.remove('active'));
             element.classList.add('active');
         }
         
+        // Add traceability info to content
+        function addTraceabilityInfo(id, type) {
+            const content = document.getElementById('content');
+            const traceDiv = document.createElement('div');
+            traceDiv.className = 'traceability-info';
+            
+            let html = '<h4>Traceability Links</h4><ul>';
+            
+            if (type === 'softwareRequirements') {
+                const prqId = associations.swrToPrq[id];
+                if (prqId) {
+                    const prq = documents.productRequirements.find(d => d.id === prqId);
+                    if (prq) {
+                        html += `<li><strong>Parent Product Requirement:</strong> <a href="#${prq.path}" onclick="navigateToRequirement('${prq.path}', '${prq.id}', 'productRequirements')">${prqId}: ${prq.title}</a></li>`;
+                    }
+                    
+                    const unId = associations.prqToUn[prqId];
+                    if (unId) {
+                        const un = documents.userNeeds.find(d => d.id === unId);
+                        if (un) {
+                            html += `<li><strong>Related User Need:</strong> <a href="#${un.path}" onclick="navigateToRequirement('${un.path}', '${un.id}', 'userNeeds')">${unId}: ${un.title}</a></li>`;
+                        }
+                    }
+                }
+            } else if (type === 'productRequirements') {
+                const unId = associations.prqToUn[id];
+                if (unId) {
+                    const un = documents.userNeeds.find(d => d.id === unId);
+                    if (un) {
+                        html += `<li><strong>Parent User Need:</strong> <a href="#${un.path}" onclick="navigateToRequirement('${un.path}', '${un.id}', 'userNeeds')">${unId}: ${un.title}</a></li>`;
+                    }
+                }
+                
+                const swrs = associations.prqToSwrs[id] || [];
+                if (swrs.length > 0) {
+                    html += '<li><strong>Associated Software Requirements:</strong><ul style="margin-top: 5px;">';
+                    swrs.forEach(swrId => {
+                        const swr = documents.softwareRequirements.find(d => d.id === swrId);
+                        if (swr) {
+                            html += `<li><a href="#${swr.path}" onclick="navigateToRequirement('${swr.path}', '${swr.id}', 'softwareRequirements')">${swrId}: ${swr.title}</a></li>`;
+                        }
+                    });
+                    html += '</ul></li>';
+                }
+            } else if (type === 'userNeeds') {
+                const prqs = associations.unToPrqs[id] || [];
+                if (prqs.length > 0) {
+                    html += '<li><strong>Associated Product Requirements:</strong><ul style="margin-top: 5px;">';
+                    prqs.forEach(prqId => {
+                        const prq = documents.productRequirements.find(d => d.id === prqId);
+                        if (prq) {
+                            html += `<li><a href="#${prq.path}" onclick="navigateToRequirement('${prq.path}', '${prq.id}', 'productRequirements')">${prqId}: ${prq.title}</a></li>`;
+                        }
+                    });
+                    html += '</ul></li>';
+                }
+            }
+            
+            html += '</ul>';
+            traceDiv.innerHTML = DOMPurify.sanitize(html);
+            
+            // Insert after the title
+            const title = content.querySelector('h1');
+            if (title && title.nextSibling) {
+                content.insertBefore(traceDiv, title.nextSibling);
+            } else {
+                content.appendChild(traceDiv);
+            }
+        }
+        
+        // Navigate to a requirement
+        window.navigateToRequirement = function(path, id, type) {
+            event.preventDefault();
+            loadDocument(path, id, type);
+            const navLink = document.querySelector(`.nav-list a[data-id="${id}"]`);
+            if (navLink) {
+                setActiveLink(navLink);
+                highlightAssociations(id, type);
+            }
+        };
+        
         // Load and display markdown document
-        async function loadDocument(path) {
+        async function loadDocument(path, id, type) {
             const loading = document.getElementById('loading');
             const content = document.getElementById('content');
             
@@ -414,6 +777,9 @@
                 const safeHtml = DOMPurify.sanitize(html);
                 
                 content.innerHTML = processLinks(safeHtml, path);
+                
+                // Add traceability info
+                addTraceabilityInfo(id, type);
                 
                 loading.style.display = 'none';
                 content.style.display = 'block';
@@ -454,9 +820,32 @@
                     link.href = '#' + fullPath;
                     link.onclick = (e) => {
                         e.preventDefault();
-                        loadDocument(fullPath);
-                        const navLink = document.querySelector(`.nav-section a[href="#${fullPath}"]`);
-                        if (navLink) setActiveLink(navLink);
+                        
+                        // Determine type and ID from path
+                        let type, id;
+                        if (fullPath.includes('user_needs')) {
+                            type = 'userNeeds';
+                        } else if (fullPath.includes('product_requirements')) {
+                            type = 'productRequirements';
+                        } else if (fullPath.includes('software_requirements')) {
+                            type = 'softwareRequirements';
+                        }
+                        
+                        // Extract ID from path
+                        const match = fullPath.match(/(UN|PRQ|SWR)-\d+/);
+                        if (match) {
+                            id = match[0];
+                        }
+                        
+                        loadDocument(fullPath, id, type);
+                        const navLink = document.querySelector(`.nav-list a[href="#${fullPath}"]`);
+                        if (navLink) {
+                            setActiveLink(navLink);
+                            if (id && type) {
+                                highlightAssociations(id, type);
+                            }
+                        }
+
                     };
                 }
             });
@@ -497,6 +886,10 @@
             loading.style.display = 'none';
             content.style.display = 'block';
             
+
+            clearHighlights();
+            
+
             const homeHtml = `
                 <div class="home-content">
                     <h1>QMS Documentation Template</h1>
@@ -528,7 +921,7 @@
                     </ul>
                     
                     <p style="text-align: left; max-width: 600px; margin: 20px auto;">
-                        Navigate using the sidebar to explore the documentation. Each requirement is traceable and includes related items for complete visibility.
+                        Navigate using the sidebar to explore the documentation. Each requirement is traceable and includes related items for complete visibility. Click on any requirement to see its associations highlighted.
                     </p>
                 </div>
             `;
@@ -540,12 +933,35 @@
         window.addEventListener('hashchange', () => {
             const hash = window.location.hash.slice(1);
             if (hash) {
-                loadDocument(hash);
-                const navLink = document.querySelector(`.nav-section a[href="#${hash}"]`);
-                if (navLink) setActiveLink(navLink);
+
+                // Determine type and ID from hash
+                let type, id;
+                if (hash.includes('user_needs')) {
+                    type = 'userNeeds';
+                } else if (hash.includes('product_requirements')) {
+                    type = 'productRequirements';
+                } else if (hash.includes('software_requirements')) {
+                    type = 'softwareRequirements';
+                }
+                
+                // Extract ID from path
+                const match = hash.match(/(UN|PRQ|SWR)-\d+/);
+                if (match) {
+                    id = match[0];
+                }
+                
+                loadDocument(hash, id, type);
+                const navLink = document.querySelector(`.nav-list a[href="#${hash}"]`);
+                if (navLink) {
+                    setActiveLink(navLink);
+                    if (id && type) {
+                        highlightAssociations(id, type);
+                    }
+                }
+
             } else {
                 showHome();
-                document.querySelectorAll('.nav-section a').forEach(a => a.classList.remove('active'));
+                document.querySelectorAll('.nav-list a').forEach(a => a.classList.remove('active'));
             }
         });
         
@@ -556,9 +972,32 @@
             
             const hash = window.location.hash.slice(1);
             if (hash) {
-                loadDocument(hash);
-                const navLink = document.querySelector(`.nav-section a[href="#${hash}"]`);
-                if (navLink) setActiveLink(navLink);
+
+                // Determine type and ID from hash
+                let type, id;
+                if (hash.includes('user_needs')) {
+                    type = 'userNeeds';
+                } else if (hash.includes('product_requirements')) {
+                    type = 'productRequirements';
+                } else if (hash.includes('software_requirements')) {
+                    type = 'softwareRequirements';
+                }
+                
+                // Extract ID from path
+                const match = hash.match(/(UN|PRQ|SWR)-\d+/);
+                if (match) {
+                    id = match[0];
+                }
+                
+                loadDocument(hash, id, type);
+                const navLink = document.querySelector(`.nav-list a[href="#${hash}"]`);
+                if (navLink) {
+                    setActiveLink(navLink);
+                    if (id && type) {
+                        highlightAssociations(id, type);
+                    }
+                }
+
             }
         });
     </script>
