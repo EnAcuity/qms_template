@@ -203,6 +203,13 @@
                     <!-- Dynamically populated -->
                 </ul>
             </div>
+            
+            <div class="nav-section">
+                <h3>Software Requirements</h3>
+                <ul id="softwareReqsList">
+                    <!-- Dynamically populated -->
+                </ul>
+            </div>
         </div>
         
         <div class="content">
@@ -238,6 +245,22 @@
             productRequirements: [
                 { id: 'PRQ-001', title: 'Login Functionality', path: 'traceability/product_requirements/PRQ-001.md' },
                 { id: 'PRQ-008', title: 'Password Requirements', path: 'traceability/product_requirements/PRQ-008.md' }
+            ],
+            softwareRequirements: [
+                { id: 'SWR-001', title: 'User Authentication Module', path: 'traceability/software_requirements/SWR-001.md' },
+                { id: 'SWR-002', title: 'Password Validation Service', path: 'traceability/software_requirements/SWR-002.md' },
+                { id: 'SWR-003', title: 'Session Management Component', path: 'traceability/software_requirements/SWR-003.md' },
+                { id: 'SWR-004', title: 'Security Encryption Module', path: 'traceability/software_requirements/SWR-004.md' },
+                { id: 'SWR-005', title: 'Login Form UI Component', path: 'traceability/software_requirements/SWR-005.md' },
+                { id: 'SWR-006', title: 'Authentication API Endpoint', path: 'traceability/software_requirements/SWR-006.md' },
+                { id: 'SWR-007', title: 'User Database Interface', path: 'traceability/software_requirements/SWR-007.md' },
+                { id: 'SWR-008', title: 'Login Attempt Logging Service', path: 'traceability/software_requirements/SWR-008.md' },
+                { id: 'SWR-009', title: 'Account Lockout Manager', path: 'traceability/software_requirements/SWR-009.md' },
+                { id: 'SWR-010', title: 'Password Strength Calculator', path: 'traceability/software_requirements/SWR-010.md' },
+                { id: 'SWR-011', title: 'Password Policy Configuration', path: 'traceability/software_requirements/SWR-011.md' },
+                { id: 'SWR-012', title: 'Password History Tracker', path: 'traceability/software_requirements/SWR-012.md' },
+                { id: 'SWR-013', title: 'Password Reset Service', path: 'traceability/software_requirements/SWR-013.md' },
+                { id: 'SWR-014', title: 'Regex Validation Library', path: 'traceability/software_requirements/SWR-014.md' }
             ]
         };
         
@@ -245,6 +268,7 @@
         function initNavigation() {
             const userNeedsList = document.getElementById('userNeedsList');
             const productReqsList = document.getElementById('productReqsList');
+            const softwareReqsList = document.getElementById('softwareReqsList');
             
             // Populate user needs
             documents.userNeeds.forEach(doc => {
@@ -274,6 +298,21 @@
                 };
                 li.appendChild(a);
                 productReqsList.appendChild(li);
+            });
+            
+            // Populate software requirements
+            documents.softwareRequirements.forEach(doc => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = `#${doc.path}`;
+                a.textContent = `${doc.id}: ${doc.title}`;
+                a.onclick = (e) => {
+                    e.preventDefault();
+                    loadDocument(doc.path);
+                    setActiveLink(a);
+                };
+                li.appendChild(a);
+                softwareReqsList.appendChild(li);
             });
         }
         
@@ -433,6 +472,10 @@
                             <div class="stat-number">${documents.productRequirements.length}</div>
                             <div class="stat-label">Product Requirements</div>
                         </div>
+                        <div class="stat">
+                            <div class="stat-number">${documents.softwareRequirements.length}</div>
+                            <div class="stat-label">Software Requirements</div>
+                        </div>
                     </div>
                     
                     <h2 style="margin-top: 50px;">Getting Started</h2>
@@ -442,6 +485,7 @@
                     <ul style="text-align: left; max-width: 600px; margin: 0 auto;">
                         <li><strong>User Needs:</strong> High-level requirements from the user's perspective</li>
                         <li><strong>Product Requirements:</strong> Detailed technical specifications that implement user needs</li>
+                        <li><strong>Software Requirements:</strong> Implementation-level requirements that realize product requirements</li>
                     </ul>
                     
                     <p style="text-align: left; max-width: 600px; margin: 20px auto;">
