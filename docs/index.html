@@ -193,21 +193,21 @@
             <div class="nav-section">
                 <h3>User Needs</h3>
                 <ul id="userNeedsList">
-                    <!-- Dynamically populated -->
+                    <li style="color: #7f8c8d; padding: 8px 12px;">Loading...</li>
                 </ul>
             </div>
             
             <div class="nav-section">
                 <h3>Product Requirements</h3>
                 <ul id="productReqsList">
-                    <!-- Dynamically populated -->
+                    <li style="color: #7f8c8d; padding: 8px 12px;">Loading...</li>
                 </ul>
             </div>
             
             <div class="nav-section">
                 <h3>Software Requirements</h3>
                 <ul id="softwareReqsList">
-                    <!-- Dynamically populated -->
+                    <li style="color: #7f8c8d; padding: 8px 12px;">Loading...</li>
                 </ul>
             </div>
         </div>
@@ -221,57 +221,153 @@
     </div>
 
     <script>
+        // Dynamic documents storage
+        const documents = {
+            userNeeds: [],
+            productRequirements: [],
+            softwareRequirements: []
+        };
+        
         // Get the base URL for the site (handles both local and GitHub Pages)
         function getBaseUrl() {
-            // Check if we're on GitHub Pages
             if (window.location.hostname.includes('github.io')) {
-                // Extract repository name from pathname
                 const pathParts = window.location.pathname.split('/').filter(p => p);
                 if (pathParts.length > 0 && !pathParts[0].includes('.')) {
                     return `/${pathParts[0]}`;
                 }
             }
-            // Local development or custom domain
             return '';
         }
         
         const baseUrl = getBaseUrl();
         
-        // Document structure - define all documents here
-        const documents = {
-            userNeeds: [
-                { id: 'UN-001', title: 'System Authentication', path: 'traceability/user_needs/UN-001.md' }
-            ],
-            productRequirements: [
-                { id: 'PRQ-001', title: 'Login Functionality', path: 'traceability/product_requirements/PRQ-001.md' },
-                { id: 'PRQ-008', title: 'Password Requirements', path: 'traceability/product_requirements/PRQ-008.md' }
-            ],
-            softwareRequirements: [
-                { id: 'SWR-001', title: 'User Authentication Module', path: 'traceability/software_requirements/SWR-001.md' },
-                { id: 'SWR-002', title: 'Password Validation Service', path: 'traceability/software_requirements/SWR-002.md' },
-                { id: 'SWR-003', title: 'Session Management Component', path: 'traceability/software_requirements/SWR-003.md' },
-                { id: 'SWR-004', title: 'Security Encryption Module', path: 'traceability/software_requirements/SWR-004.md' },
-                { id: 'SWR-005', title: 'Login Form UI Component', path: 'traceability/software_requirements/SWR-005.md' },
-                { id: 'SWR-006', title: 'Authentication API Endpoint', path: 'traceability/software_requirements/SWR-006.md' },
-                { id: 'SWR-007', title: 'User Database Interface', path: 'traceability/software_requirements/SWR-007.md' },
-                { id: 'SWR-008', title: 'Login Attempt Logging Service', path: 'traceability/software_requirements/SWR-008.md' },
-                { id: 'SWR-009', title: 'Account Lockout Manager', path: 'traceability/software_requirements/SWR-009.md' },
-                { id: 'SWR-010', title: 'Password Strength Calculator', path: 'traceability/software_requirements/SWR-010.md' },
-                { id: 'SWR-011', title: 'Password Policy Configuration', path: 'traceability/software_requirements/SWR-011.md' },
-                { id: 'SWR-012', title: 'Password History Tracker', path: 'traceability/software_requirements/SWR-012.md' },
-                { id: 'SWR-013', title: 'Password Reset Service', path: 'traceability/software_requirements/SWR-013.md' },
-                { id: 'SWR-014', title: 'Regex Validation Library', path: 'traceability/software_requirements/SWR-014.md' }
-            ]
-        };
+        // Extract ID from filename (e.g., "UN-001.md" -> "UN-001")
+        function extractIdFromFilename(filename) {
+            return filename.replace('.md', '');
+        }
         
-        // Initialize navigation
-        function initNavigation() {
-            const userNeedsList = document.getElementById('userNeedsList');
-            const productReqsList = document.getElementById('productReqsList');
-            const softwareReqsList = document.getElementById('softwareReqsList');
+        // Extract title from markdown content
+        async function extractTitleFromMarkdown(path) {
+            try {
+                const fetchPath = baseUrl ? `${baseUrl}/${path}` : path;
+                const response = await fetch(fetchPath);
+                if (!response.ok) return null;
+                
+                const content = await response.text();
+                // Try to extract title from first # heading
+                const titleMatch = content.match(/^#\s+([^\n]+)/m);
+                if (titleMatch) {
+                    // Remove ID prefix if it exists in the title
+                    const title = titleMatch[1];
+                    const colonIndex = title.indexOf(':');
+                    return colonIndex > -1 ? title.substring(colonIndex + 1).trim() : title;
+                }
+                return null;
+            } catch (error) {
+                console.error(`Failed to extract title from ${path}:`, error);
+                return null;
+            }
+        }
+        
+        // Discover markdown files in a directory using GitHub API
+        async function discoverMarkdownFiles(directory, category) {
+            const files = [];
             
-            // Populate user needs
-            documents.userNeeds.forEach(doc => {
+            // For GitHub Pages, we'll use a fallback approach
+            // Try to use GitHub API if possible, otherwise fall back to known files
+            try {
+                // Check if we're on GitHub Pages and extract repo information
+                if (window.location.hostname.includes('github.io')) {
+                    const pathParts = window.location.pathname.split('/').filter(p => p);
+                    const owner = window.location.hostname.split('.')[0];
+                    const repo = pathParts[0] || 'qms_template';
+                    
+                    // Use GitHub API to list files
+                    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/docs/${directory}`;
+                    const response = await fetch(apiUrl);
+                    
+                    if (response.ok) {
+                        const items = await response.json();
+                        for (const item of items) {
+                            if (item.type === 'file' && item.name.endsWith('.md')) {
+                                const path = `${directory}/${item.name}`;
+                                const id = extractIdFromFilename(item.name);
+                                const title = await extractTitleFromMarkdown(path) || item.name.replace('.md', '');
+                                files.push({ id, title, path });
+                            }
+                        }
+                        return files;
+                    }
+                }
+            } catch (error) {
+                console.log('GitHub API not available, using pattern-based discovery');
+            }
+            
+            // Fallback: Try to discover files based on known patterns
+            const patterns = {
+                'traceability/user_needs': ['UN-001', 'UN-002', 'UN-003', 'UN-004', 'UN-005'],
+                'traceability/product_requirements': ['PRQ-001', 'PRQ-002', 'PRQ-003', 'PRQ-004', 'PRQ-005', 'PRQ-006', 'PRQ-007', 'PRQ-008', 'PRQ-009', 'PRQ-010'],
+                'traceability/software_requirements': ['SWR-001', 'SWR-002', 'SWR-003', 'SWR-004', 'SWR-005', 'SWR-006', 'SWR-007', 'SWR-008', 'SWR-009', 'SWR-010', 'SWR-011', 'SWR-012', 'SWR-013', 'SWR-014', 'SWR-015', 'SWR-016', 'SWR-017', 'SWR-018', 'SWR-019', 'SWR-020']
+            };
+            
+            const possibleIds = patterns[directory] || [];
+            
+            for (const id of possibleIds) {
+                const filename = `${id}.md`;
+                const path = `${directory}/${filename}`;
+                
+                // Check if file exists by trying to fetch it
+                try {
+                    const fetchPath = baseUrl ? `${baseUrl}/${path}` : path;
+                    const response = await fetch(fetchPath, { method: 'HEAD' });
+                    if (response.ok || response.status === 200) {
+                        const title = await extractTitleFromMarkdown(path) || id;
+                        files.push({ id, title, path });
+                    }
+                } catch (e) {
+                    // File doesn't exist, continue
+                }
+            }
+            
+            return files;
+        }
+        
+        // Initialize navigation dynamically
+        async function initNavigation() {
+            // Discover all markdown files
+            documents.userNeeds = await discoverMarkdownFiles('traceability/user_needs', 'userNeeds');
+            documents.productRequirements = await discoverMarkdownFiles('traceability/product_requirements', 'productRequirements');
+            documents.softwareRequirements = await discoverMarkdownFiles('traceability/software_requirements', 'softwareRequirements');
+            
+            // Sort documents by ID
+            documents.userNeeds.sort((a, b) => a.id.localeCompare(b.id));
+            documents.productRequirements.sort((a, b) => a.id.localeCompare(b.id));
+            documents.softwareRequirements.sort((a, b) => a.id.localeCompare(b.id));
+            
+            // Populate navigation lists
+            populateNavList('userNeedsList', documents.userNeeds);
+            populateNavList('productReqsList', documents.productRequirements);
+            populateNavList('softwareReqsList', documents.softwareRequirements);
+            
+            // Show home content
+            showHome();
+        }
+        
+        // Populate a navigation list
+        function populateNavList(listId, items) {
+            const list = document.getElementById(listId);
+            list.innerHTML = ''; // Clear loading message
+            
+            if (items.length === 0) {
+                const li = document.createElement('li');
+                li.style.color = '#7f8c8d';
+                li.style.padding = '8px 12px';
+                li.textContent = 'No documents found';
+                list.appendChild(li);
+                return;
+            }
+            
+            items.forEach(doc => {
                 const li = document.createElement('li');
                 const a = document.createElement('a');
                 a.href = `#${doc.path}`;
@@ -282,37 +378,7 @@
                     setActiveLink(a);
                 };
                 li.appendChild(a);
-                userNeedsList.appendChild(li);
-            });
-            
-            // Populate product requirements
-            documents.productRequirements.forEach(doc => {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.href = `#${doc.path}`;
-                a.textContent = `${doc.id}: ${doc.title}`;
-                a.onclick = (e) => {
-                    e.preventDefault();
-                    loadDocument(doc.path);
-                    setActiveLink(a);
-                };
-                li.appendChild(a);
-                productReqsList.appendChild(li);
-            });
-            
-            // Populate software requirements
-            documents.softwareRequirements.forEach(doc => {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.href = `#${doc.path}`;
-                a.textContent = `${doc.id}: ${doc.title}`;
-                a.onclick = (e) => {
-                    e.preventDefault();
-                    loadDocument(doc.path);
-                    setActiveLink(a);
-                };
-                li.appendChild(a);
-                softwareReqsList.appendChild(li);
+                list.appendChild(li);
             });
         }
         
@@ -331,10 +397,7 @@
             content.style.display = 'none';
             
             try {
-                // Construct the full URL for fetching the document
                 let fetchPath = path;
-                
-                // If we have a base URL (GitHub Pages), prepend it
                 if (baseUrl) {
                     fetchPath = `${baseUrl}/${path}`;
                 }
@@ -348,24 +411,19 @@
                 
                 const markdown = await response.text();
                 const html = marked.parse(markdown);
-                
-                // Sanitize HTML to prevent XSS
                 const safeHtml = DOMPurify.sanitize(html);
                 
-                // Process internal links to work with the dynamic loader
                 content.innerHTML = processLinks(safeHtml, path);
                 
                 loading.style.display = 'none';
                 content.style.display = 'block';
                 
-                // Update URL hash
                 window.location.hash = path;
             } catch (error) {
                 console.error('Failed to load document:', error);
                 loading.style.display = 'none';
                 content.style.display = 'block';
                 
-                // Safely handle error display - build DOM nodes to prevent XSS
                 content.innerHTML = '';
                 
                 const errorTitle = document.createElement('h2');
@@ -380,19 +438,6 @@
                 const errorMessage = document.createElement('p');
                 errorMessage.textContent = `Error: ${error.message}`;
                 content.appendChild(errorMessage);
-                
-                const troubleshootingTitle = document.createElement('p');
-                troubleshootingTitle.style.marginTop = '20px';
-                troubleshootingTitle.innerHTML = '<strong>Troubleshooting:</strong>';
-                content.appendChild(troubleshootingTitle);
-                
-                const troubleshootingList = document.createElement('ul');
-                troubleshootingList.innerHTML = `
-                    <li>Ensure the file exists at the correct path</li>
-                    <li>Check that GitHub Pages is properly configured</li>
-                    <li>Verify the repository settings point to the /docs folder</li>
-                `;
-                content.appendChild(troubleshootingList);
             }
         }
         
@@ -405,13 +450,11 @@
             links.forEach(link => {
                 const href = link.getAttribute('href');
                 if (href && href.endsWith('.md')) {
-                    // Convert relative path to absolute from docs root
                     const fullPath = resolveRelativePath(href, currentPath);
                     link.href = '#' + fullPath;
                     link.onclick = (e) => {
                         e.preventDefault();
                         loadDocument(fullPath);
-                        // Find and activate corresponding nav link
                         const navLink = document.querySelector(`.nav-section a[href="#${fullPath}"]`);
                         if (navLink) setActiveLink(navLink);
                     };
@@ -427,7 +470,6 @@
             
             let path = relativePath;
             if (path.startsWith('../')) {
-                // Navigate up directory levels
                 let upLevels = 0;
                 while (path.startsWith('../')) {
                     path = path.slice(3);
@@ -441,11 +483,9 @@
                 
                 path = pathParts.join('/') + '/' + path;
             } else if (!path.startsWith('traceability/')) {
-                // Relative to current directory
                 path = currentDir + '/' + path;
             }
             
-            // Clean up double slashes and leading slashes
             return path.replace(/\/+/g, '/').replace(/^\//, '');
         }
         
@@ -457,7 +497,6 @@
             loading.style.display = 'none';
             content.style.display = 'block';
             
-            // Create home content safely
             const homeHtml = `
                 <div class="home-content">
                     <h1>QMS Documentation Template</h1>
@@ -494,7 +533,6 @@
                 </div>
             `;
             
-            // Sanitize before inserting
             content.innerHTML = DOMPurify.sanitize(homeHtml);
         }
         
@@ -503,7 +541,6 @@
             const hash = window.location.hash.slice(1);
             if (hash) {
                 loadDocument(hash);
-                // Find and activate corresponding nav link
                 const navLink = document.querySelector(`.nav-section a[href="#${hash}"]`);
                 if (navLink) setActiveLink(navLink);
             } else {
@@ -513,18 +550,15 @@
         });
         
         // Initialize on load
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             console.log('Base URL detected:', baseUrl || '(none - local development)');
-            initNavigation();
+            await initNavigation();
             
             const hash = window.location.hash.slice(1);
             if (hash) {
                 loadDocument(hash);
-                // Find and activate corresponding nav link
                 const navLink = document.querySelector(`.nav-section a[href="#${hash}"]`);
                 if (navLink) setActiveLink(navLink);
-            } else {
-                showHome();
             }
         });
     </script>
