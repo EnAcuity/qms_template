@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QMS Documentation Template</title>
-    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" integrity="sha384-j9v5s3jCL7+hJQLK6RCEXyPWqrNALCXLQCLT9iF8p4EVXH1F5K5J5lFJlX5X1h5X" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" integrity="sha384-i2oHNNvP4vLwR/2QNifI5Fu3M7zFnDqAFPVPGCjP3rR5LlXc3xDPzMdvLDQ0qLcI" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -40,35 +40,99 @@
         
         .nav-section {
             margin-bottom: 30px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+        }
+        
+        .nav-section.collapsed .nav-list {
+            display: none;
+        }
+        
+        .nav-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            background: rgba(52, 73, 94, 0.3);
+            border-radius: 4px;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+        }
+        
+        .nav-section-header:hover {
+            background: rgba(52, 73, 94, 0.5);
         }
         
         .nav-section h3 {
             color: #3498db;
             font-size: 0.9rem;
             text-transform: uppercase;
-            margin-bottom: 10px;
+            margin: 0;
         }
         
-        .nav-section ul {
+        .collapse-icon {
+            color: #3498db;
+            font-size: 0.9rem;
+            transition: transform 0.3s;
+        }
+        
+        .nav-section.collapsed .collapse-icon {
+            transform: rotate(-90deg);
+        }
+        
+        .nav-list {
             list-style: none;
         }
         
-        .nav-section li {
+        .nav-list li {
             margin-bottom: 5px;
+            position: relative;
         }
         
-        .nav-section a {
+        .nav-list a {
             color: #ecf0f1;
             text-decoration: none;
             padding: 8px 12px;
             display: block;
             border-radius: 4px;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, border 0.3s;
+            border: 2px solid transparent;
         }
         
-        .nav-section a:hover,
-        .nav-section a.active {
+        .nav-list a:hover {
             background-color: #34495e;
+        }
+        
+        .nav-list a.active {
+            background-color: #34495e;
+            border-color: #3498db;
+        }
+        
+        .nav-list a.highlighted {
+            background-color: rgba(52, 152, 219, 0.3);
+            border-color: #3498db;
+        }
+        
+        .nav-list a.parent-highlighted {
+            background-color: rgba(231, 76, 60, 0.3);
+            border-color: #e74c3c;
+        }
+        
+        .association-badge {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+        
+        .association-badge.parent {
+            background: #e74c3c;
         }
         
         .content {
@@ -83,6 +147,38 @@
             border-radius: 8px;
             padding: 30px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .traceability-info {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .traceability-info h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .traceability-info ul {
+            list-style: none;
+            margin-left: 0;
+        }
+        
+        .traceability-info li {
+            padding: 5px 0;
+        }
+        
+        .traceability-info a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .traceability-info a:hover {
+            text-decoration: underline;
         }
         
         #loading {
@@ -190,17 +286,33 @@
         <div class="sidebar">
             <h2>QMS Documentation</h2>
             
-            <div class="nav-section">
-                <h3>User Needs</h3>
-                <ul id="userNeedsList">
-                    <!-- Dynamically populated -->
+            <div class="nav-section" id="userNeedsSection">
+                <div class="nav-section-header" onclick="toggleSection('userNeedsSection')">
+                    <h3>User Needs</h3>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <ul class="nav-list" id="userNeedsList">
+                    <li style="color: #7f8c8d; padding: 8px 12px;">Loading...</li>
                 </ul>
             </div>
             
-            <div class="nav-section">
-                <h3>Product Requirements</h3>
-                <ul id="productReqsList">
-                    <!-- Dynamically populated -->
+            <div class="nav-section" id="productReqsSection">
+                <div class="nav-section-header" onclick="toggleSection('productReqsSection')">
+                    <h3>Product Requirements</h3>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <ul class="nav-list" id="productReqsList">
+                    <li style="color: #7f8c8d; padding: 8px 12px;">Loading...</li>
+                </ul>
+            </div>
+            
+            <div class="nav-section" id="softwareReqsSection">
+                <div class="nav-section-header" onclick="toggleSection('softwareReqsSection')">
+                    <h3>Software Requirements</h3>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <ul class="nav-list" id="softwareReqsList">
+                    <li style="color: #7f8c8d; padding: 8px 12px;">Loading...</li>
                 </ul>
             </div>
         </div>
@@ -214,77 +326,426 @@
     </div>
 
     <script>
+        // Dynamic documents storage
+        const documents = {
+            userNeeds: [],
+            productRequirements: [],
+            softwareRequirements: []
+        };
+        
+        // Associations mapping
+        const associations = {
+            swrToPrq: {},  // SWR-001: PRQ-001
+            prqToUn: {},   // PRQ-001: UN-001
+            prqToSwrs: {}, // PRQ-001: [SWR-001, SWR-002, ...]
+            unToPrqs: {}   // UN-001: [PRQ-001, PRQ-008, ...]
+        };
+        
         // Get the base URL for the site (handles both local and GitHub Pages)
         function getBaseUrl() {
-            // Check if we're on GitHub Pages
             if (window.location.hostname.includes('github.io')) {
-                // Extract repository name from pathname
                 const pathParts = window.location.pathname.split('/').filter(p => p);
                 if (pathParts.length > 0 && !pathParts[0].includes('.')) {
                     return `/${pathParts[0]}`;
                 }
             }
-            // Local development or custom domain
             return '';
         }
         
         const baseUrl = getBaseUrl();
         
-        // Document structure - define all documents here
-        const documents = {
-            userNeeds: [
-                { id: 'UN-001', title: 'System Authentication', path: 'traceability/user_needs/UN-001.md' }
-            ],
-            productRequirements: [
-                { id: 'PRQ-001', title: 'Login Functionality', path: 'traceability/product_requirements/PRQ-001.md' },
-                { id: 'PRQ-008', title: 'Password Requirements', path: 'traceability/product_requirements/PRQ-008.md' }
-            ]
-        };
+        // Toggle section collapse
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle('collapsed');
+        }
         
-        // Initialize navigation
-        function initNavigation() {
-            const userNeedsList = document.getElementById('userNeedsList');
-            const productReqsList = document.getElementById('productReqsList');
+        // Extract ID from filename (e.g., "UN-001.md" -> "UN-001")
+        function extractIdFromFilename(filename) {
+            return filename.replace('.md', '');
+        }
+        
+        // Extract associations from markdown content
+        async function extractAssociationsFromMarkdown(path, id, type) {
+            try {
+                const fetchPath = baseUrl ? `${baseUrl}/${path}` : path;
+                const response = await fetch(fetchPath);
+                if (!response.ok) return;
+                
+                const content = await response.text();
+                
+                if (type === 'softwareRequirements') {
+                    // Extract parent PRQ from SWR files
+                    const prqMatch = content.match(/\[PRQ-\d+\]/);
+                    if (prqMatch) {
+                        const prqId = prqMatch[0].slice(1, -1);
+                        associations.swrToPrq[id] = prqId;
+                        if (!associations.prqToSwrs[prqId]) {
+                            associations.prqToSwrs[prqId] = [];
+                        }
+                        associations.prqToSwrs[prqId].push(id);
+                    }
+                } else if (type === 'productRequirements') {
+                    // Extract parent UN from PRQ files
+                    const unMatch = content.match(/\[UN-\d+\]/);
+                    if (unMatch) {
+                        const unId = unMatch[0].slice(1, -1);
+                        associations.prqToUn[id] = unId;
+                        if (!associations.unToPrqs[unId]) {
+                            associations.unToPrqs[unId] = [];
+                        }
+                        associations.unToPrqs[unId].push(id);
+                    }
+                    
+                    // Extract associated SWRs
+                    const swrMatches = content.match(/\[SWR-\d+\]/g);
+                    if (swrMatches) {
+                        associations.prqToSwrs[id] = swrMatches.map(match => match.slice(1, -1));
+                    }
+                }
+            } catch (error) {
+                console.error(`Failed to extract associations from ${path}:`, error);
+            }
+        }
+        
+        // Extract title from markdown content
+        async function extractTitleFromMarkdown(path) {
+            try {
+                const fetchPath = baseUrl ? `${baseUrl}/${path}` : path;
+                const response = await fetch(fetchPath);
+                if (!response.ok) return null;
+                
+                const content = await response.text();
+                // Try to extract title from first # heading
+                const titleMatch = content.match(/^#\s+([^\n]+)/m);
+                if (titleMatch) {
+                    // Remove ID prefix if it exists in the title
+                    const title = titleMatch[1];
+                    const colonIndex = title.indexOf(':');
+                    return colonIndex > -1 ? title.substring(colonIndex + 1).trim() : title;
+                }
+                return null;
+            } catch (error) {
+                console.error(`Failed to extract title from ${path}:`, error);
+                return null;
+            }
+        }
+        
+        // Discover markdown files in a directory using GitHub API
+        async function discoverMarkdownFiles(directory, category) {
+            const files = [];
             
-            // Populate user needs
-            documents.userNeeds.forEach(doc => {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.href = `#${doc.path}`;
-                a.textContent = `${doc.id}: ${doc.title}`;
-                a.onclick = (e) => {
-                    e.preventDefault();
-                    loadDocument(doc.path);
-                    setActiveLink(a);
-                };
-                li.appendChild(a);
-                userNeedsList.appendChild(li);
+            // For GitHub Pages, we'll use a fallback approach
+            // Try to use GitHub API if possible, otherwise fall back to known files
+            try {
+                // Check if we're on GitHub Pages and extract repo information
+                if (window.location.hostname.includes('github.io')) {
+                    const pathParts = window.location.pathname.split('/').filter(p => p);
+                    const owner = window.location.hostname.split('.')[0];
+                    const repo = pathParts[0] || 'qms_template';
+                    
+                    // Use GitHub API to list files
+                    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/docs/${directory}`;
+                    const response = await fetch(apiUrl);
+                    
+                    if (response.ok) {
+                        const items = await response.json();
+                        for (const item of items) {
+                            if (item.type === 'file' && item.name.endsWith('.md')) {
+                                const path = `${directory}/${item.name}`;
+                                const id = extractIdFromFilename(item.name);
+                                const title = await extractTitleFromMarkdown(path) || item.name.replace('.md', '');
+                                await extractAssociationsFromMarkdown(path, id, category);
+                                files.push({ id, title, path });
+                            }
+                        }
+                        return files;
+                    }
+                }
+            } catch (error) {
+                console.log('GitHub API not available, using pattern-based discovery');
+            }
+            
+            // Fallback: Try to discover files based on known patterns
+            const patterns = {
+                'traceability/user_needs': ['UN-001', 'UN-002', 'UN-003', 'UN-004', 'UN-005'],
+                'traceability/product_requirements': ['PRQ-001', 'PRQ-002', 'PRQ-003', 'PRQ-004', 'PRQ-005', 'PRQ-006', 'PRQ-007', 'PRQ-008', 'PRQ-009', 'PRQ-010'],
+                'traceability/software_requirements': ['SWR-001', 'SWR-002', 'SWR-003', 'SWR-004', 'SWR-005', 'SWR-006', 'SWR-007', 'SWR-008', 'SWR-009', 'SWR-010', 'SWR-011', 'SWR-012', 'SWR-013', 'SWR-014', 'SWR-015', 'SWR-016', 'SWR-017', 'SWR-018', 'SWR-019', 'SWR-020']
+            };
+            
+            const possibleIds = patterns[directory] || [];
+            
+            for (const id of possibleIds) {
+                const filename = `${id}.md`;
+                const path = `${directory}/${filename}`;
+                
+                // Check if file exists by trying to fetch it
+                try {
+                    const fetchPath = baseUrl ? `${baseUrl}/${path}` : path;
+                    const response = await fetch(fetchPath, { method: 'HEAD' });
+                    if (response.ok || response.status === 200) {
+                        const title = await extractTitleFromMarkdown(path) || id;
+                        await extractAssociationsFromMarkdown(path, id, category);
+                        files.push({ id, title, path });
+                    }
+                } catch (e) {
+                    // File doesn't exist, continue
+                }
+            }
+            
+            return files;
+        }
+        
+        // Clear all highlights
+        function clearHighlights() {
+            document.querySelectorAll('.nav-list a').forEach(a => {
+                a.classList.remove('highlighted', 'parent-highlighted');
+                // Remove any badges
+                const badges = a.querySelectorAll('.association-badge');
+                badges.forEach(badge => badge.remove());
             });
+        }
+        
+        // Highlight associated items
+        function highlightAssociations(id, type) {
+            clearHighlights();
             
-            // Populate product requirements
-            documents.productRequirements.forEach(doc => {
+            if (type === 'softwareRequirements') {
+                // Get parent PRQ
+                const prqId = associations.swrToPrq[id];
+                if (prqId) {
+                    const prqElement = document.querySelector(`a[data-id="${prqId}"]`);
+                    if (prqElement) {
+                        prqElement.classList.add('highlighted');
+                        const badge = document.createElement('span');
+                        badge.className = 'association-badge';
+                        badge.textContent = 'Parent';
+                        prqElement.appendChild(badge);
+                        
+                        // Expand PRQ section if collapsed
+                        const prqSection = document.getElementById('productReqsSection');
+                        if (prqSection.classList.contains('collapsed')) {
+                            prqSection.classList.remove('collapsed');
+                        }
+                    }
+                    
+                    // Get grandparent UN
+                    const unId = associations.prqToUn[prqId];
+                    if (unId) {
+                        const unElement = document.querySelector(`a[data-id="${unId}"]`);
+                        if (unElement) {
+                            unElement.classList.add('parent-highlighted');
+                            const badge = document.createElement('span');
+                            badge.className = 'association-badge parent';
+                            badge.textContent = 'Parent';
+                            unElement.appendChild(badge);
+                            
+                            // Expand UN section if collapsed
+                            const unSection = document.getElementById('userNeedsSection');
+                            if (unSection.classList.contains('collapsed')) {
+                                unSection.classList.remove('collapsed');
+                            }
+                        }
+                    }
+                }
+            } else if (type === 'productRequirements') {
+                // Highlight parent UN
+                const unId = associations.prqToUn[id];
+                if (unId) {
+                    const unElement = document.querySelector(`a[data-id="${unId}"]`);
+                    if (unElement) {
+                        unElement.classList.add('parent-highlighted');
+                        const badge = document.createElement('span');
+                        badge.className = 'association-badge parent';
+                        badge.textContent = 'Parent';
+                        unElement.appendChild(badge);
+                        
+                        // Expand UN section if collapsed
+                        const unSection = document.getElementById('userNeedsSection');
+                        if (unSection.classList.contains('collapsed')) {
+                            unSection.classList.remove('collapsed');
+                        }
+                    }
+                }
+                
+                // Highlight child SWRs
+                const swrs = associations.prqToSwrs[id] || [];
+                swrs.forEach(swrId => {
+                    const swrElement = document.querySelector(`a[data-id="${swrId}"]`);
+                    if (swrElement) {
+                        swrElement.classList.add('highlighted');
+                    }
+                });
+                
+                if (swrs.length > 0) {
+                    // Expand SWR section if collapsed
+                    const swrSection = document.getElementById('softwareReqsSection');
+                    if (swrSection.classList.contains('collapsed')) {
+                        swrSection.classList.remove('collapsed');
+                    }
+                }
+            } else if (type === 'userNeeds') {
+                // Highlight child PRQs
+                const prqs = associations.unToPrqs[id] || [];
+                prqs.forEach(prqId => {
+                    const prqElement = document.querySelector(`a[data-id="${prqId}"]`);
+                    if (prqElement) {
+                        prqElement.classList.add('highlighted');
+                    }
+                });
+                
+                if (prqs.length > 0) {
+                    // Expand PRQ section if collapsed
+                    const prqSection = document.getElementById('productReqsSection');
+                    if (prqSection.classList.contains('collapsed')) {
+                        prqSection.classList.remove('collapsed');
+                    }
+                }
+            }
+        }
+        
+        // Initialize navigation dynamically
+        async function initNavigation() {
+            // Discover all markdown files
+            documents.userNeeds = await discoverMarkdownFiles('traceability/user_needs', 'userNeeds');
+            documents.productRequirements = await discoverMarkdownFiles('traceability/product_requirements', 'productRequirements');
+            documents.softwareRequirements = await discoverMarkdownFiles('traceability/software_requirements', 'softwareRequirements');
+            
+            // Sort documents by ID
+            documents.userNeeds.sort((a, b) => a.id.localeCompare(b.id));
+            documents.productRequirements.sort((a, b) => a.id.localeCompare(b.id));
+            documents.softwareRequirements.sort((a, b) => a.id.localeCompare(b.id));
+            
+            // Populate navigation lists
+            populateNavList('userNeedsList', documents.userNeeds, 'userNeeds');
+            populateNavList('productReqsList', documents.productRequirements, 'productRequirements');
+            populateNavList('softwareReqsList', documents.softwareRequirements, 'softwareRequirements');
+            
+            // Show home content
+            showHome();
+        }
+        
+        // Populate a navigation list
+        function populateNavList(listId, items, type) {
+            const list = document.getElementById(listId);
+            list.innerHTML = ''; // Clear loading message
+            
+            if (items.length === 0) {
+                const li = document.createElement('li');
+                li.style.color = '#7f8c8d';
+                li.style.padding = '8px 12px';
+                li.textContent = 'No documents found';
+                list.appendChild(li);
+                return;
+            }
+            
+            items.forEach(doc => {
                 const li = document.createElement('li');
                 const a = document.createElement('a');
                 a.href = `#${doc.path}`;
+                a.setAttribute('data-id', doc.id);
+                a.setAttribute('data-type', type);
                 a.textContent = `${doc.id}: ${doc.title}`;
                 a.onclick = (e) => {
                     e.preventDefault();
-                    loadDocument(doc.path);
+                    loadDocument(doc.path, doc.id, type);
                     setActiveLink(a);
+                    highlightAssociations(doc.id, type);
                 };
                 li.appendChild(a);
-                productReqsList.appendChild(li);
+                list.appendChild(li);
             });
         }
         
         // Set active link
         function setActiveLink(element) {
-            document.querySelectorAll('.nav-section a').forEach(a => a.classList.remove('active'));
+            document.querySelectorAll('.nav-list a').forEach(a => a.classList.remove('active'));
             element.classList.add('active');
         }
         
+        // Add traceability info to content
+        function addTraceabilityInfo(id, type) {
+            const content = document.getElementById('content');
+            const traceDiv = document.createElement('div');
+            traceDiv.className = 'traceability-info';
+            
+            let html = '<h4>Traceability Links</h4><ul>';
+            
+            if (type === 'softwareRequirements') {
+                const prqId = associations.swrToPrq[id];
+                if (prqId) {
+                    const prq = documents.productRequirements.find(d => d.id === prqId);
+                    if (prq) {
+                        html += `<li><strong>Parent Product Requirement:</strong> <a href="#${prq.path}" onclick="navigateToRequirement('${prq.path}', '${prq.id}', 'productRequirements')">${prqId}: ${prq.title}</a></li>`;
+                    }
+                    
+                    const unId = associations.prqToUn[prqId];
+                    if (unId) {
+                        const un = documents.userNeeds.find(d => d.id === unId);
+                        if (un) {
+                            html += `<li><strong>Related User Need:</strong> <a href="#${un.path}" onclick="navigateToRequirement('${un.path}', '${un.id}', 'userNeeds')">${unId}: ${un.title}</a></li>`;
+                        }
+                    }
+                }
+            } else if (type === 'productRequirements') {
+                const unId = associations.prqToUn[id];
+                if (unId) {
+                    const un = documents.userNeeds.find(d => d.id === unId);
+                    if (un) {
+                        html += `<li><strong>Parent User Need:</strong> <a href="#${un.path}" onclick="navigateToRequirement('${un.path}', '${un.id}', 'userNeeds')">${unId}: ${un.title}</a></li>`;
+                    }
+                }
+                
+                const swrs = associations.prqToSwrs[id] || [];
+                if (swrs.length > 0) {
+                    html += '<li><strong>Associated Software Requirements:</strong><ul style="margin-top: 5px;">';
+                    swrs.forEach(swrId => {
+                        const swr = documents.softwareRequirements.find(d => d.id === swrId);
+                        if (swr) {
+                            html += `<li><a href="#${swr.path}" onclick="navigateToRequirement('${swr.path}', '${swr.id}', 'softwareRequirements')">${swrId}: ${swr.title}</a></li>`;
+                        }
+                    });
+                    html += '</ul></li>';
+                }
+            } else if (type === 'userNeeds') {
+                const prqs = associations.unToPrqs[id] || [];
+                if (prqs.length > 0) {
+                    html += '<li><strong>Associated Product Requirements:</strong><ul style="margin-top: 5px;">';
+                    prqs.forEach(prqId => {
+                        const prq = documents.productRequirements.find(d => d.id === prqId);
+                        if (prq) {
+                            html += `<li><a href="#${prq.path}" onclick="navigateToRequirement('${prq.path}', '${prq.id}', 'productRequirements')">${prqId}: ${prq.title}</a></li>`;
+                        }
+                    });
+                    html += '</ul></li>';
+                }
+            }
+            
+            html += '</ul>';
+            traceDiv.innerHTML = DOMPurify.sanitize(html);
+            
+            // Insert after the title
+            const title = content.querySelector('h1');
+            if (title && title.nextSibling) {
+                content.insertBefore(traceDiv, title.nextSibling);
+            } else {
+                content.appendChild(traceDiv);
+            }
+        }
+        
+        // Navigate to a requirement
+        window.navigateToRequirement = function(path, id, type) {
+            event.preventDefault();
+            loadDocument(path, id, type);
+            const navLink = document.querySelector(`.nav-list a[data-id="${id}"]`);
+            if (navLink) {
+                setActiveLink(navLink);
+                highlightAssociations(id, type);
+            }
+        };
+        
         // Load and display markdown document
-        async function loadDocument(path) {
+        async function loadDocument(path, id, type) {
             const loading = document.getElementById('loading');
             const content = document.getElementById('content');
             
@@ -292,10 +753,7 @@
             content.style.display = 'none';
             
             try {
-                // Construct the full URL for fetching the document
                 let fetchPath = path;
-                
-                // If we have a base URL (GitHub Pages), prepend it
                 if (baseUrl) {
                     fetchPath = `${baseUrl}/${path}`;
                 }
@@ -309,24 +767,22 @@
                 
                 const markdown = await response.text();
                 const html = marked.parse(markdown);
-                
-                // Sanitize HTML to prevent XSS
                 const safeHtml = DOMPurify.sanitize(html);
                 
-                // Process internal links to work with the dynamic loader
                 content.innerHTML = processLinks(safeHtml, path);
+                
+                // Add traceability info
+                addTraceabilityInfo(id, type);
                 
                 loading.style.display = 'none';
                 content.style.display = 'block';
                 
-                // Update URL hash
                 window.location.hash = path;
             } catch (error) {
                 console.error('Failed to load document:', error);
                 loading.style.display = 'none';
                 content.style.display = 'block';
                 
-                // Safely handle error display - build DOM nodes to prevent XSS
                 content.innerHTML = '';
                 
                 const errorTitle = document.createElement('h2');
@@ -341,19 +797,6 @@
                 const errorMessage = document.createElement('p');
                 errorMessage.textContent = `Error: ${error.message}`;
                 content.appendChild(errorMessage);
-                
-                const troubleshootingTitle = document.createElement('p');
-                troubleshootingTitle.style.marginTop = '20px';
-                troubleshootingTitle.innerHTML = '<strong>Troubleshooting:</strong>';
-                content.appendChild(troubleshootingTitle);
-                
-                const troubleshootingList = document.createElement('ul');
-                troubleshootingList.innerHTML = `
-                    <li>Ensure the file exists at the correct path</li>
-                    <li>Check that GitHub Pages is properly configured</li>
-                    <li>Verify the repository settings point to the /docs folder</li>
-                `;
-                content.appendChild(troubleshootingList);
             }
         }
         
@@ -366,15 +809,35 @@
             links.forEach(link => {
                 const href = link.getAttribute('href');
                 if (href && href.endsWith('.md')) {
-                    // Convert relative path to absolute from docs root
                     const fullPath = resolveRelativePath(href, currentPath);
                     link.href = '#' + fullPath;
                     link.onclick = (e) => {
                         e.preventDefault();
-                        loadDocument(fullPath);
-                        // Find and activate corresponding nav link
-                        const navLink = document.querySelector(`.nav-section a[href="#${fullPath}"]`);
-                        if (navLink) setActiveLink(navLink);
+                        
+                        // Determine type and ID from path
+                        let type, id;
+                        if (fullPath.includes('user_needs')) {
+                            type = 'userNeeds';
+                        } else if (fullPath.includes('product_requirements')) {
+                            type = 'productRequirements';
+                        } else if (fullPath.includes('software_requirements')) {
+                            type = 'softwareRequirements';
+                        }
+                        
+                        // Extract ID from path
+                        const match = fullPath.match(/(UN|PRQ|SWR)-\d+/);
+                        if (match) {
+                            id = match[0];
+                        }
+                        
+                        loadDocument(fullPath, id, type);
+                        const navLink = document.querySelector(`.nav-list a[href="#${fullPath}"]`);
+                        if (navLink) {
+                            setActiveLink(navLink);
+                            if (id && type) {
+                                highlightAssociations(id, type);
+                            }
+                        }
                     };
                 }
             });
@@ -388,7 +851,6 @@
             
             let path = relativePath;
             if (path.startsWith('../')) {
-                // Navigate up directory levels
                 let upLevels = 0;
                 while (path.startsWith('../')) {
                     path = path.slice(3);
@@ -402,11 +864,9 @@
                 
                 path = pathParts.join('/') + '/' + path;
             } else if (!path.startsWith('traceability/')) {
-                // Relative to current directory
                 path = currentDir + '/' + path;
             }
             
-            // Clean up double slashes and leading slashes
             return path.replace(/\/+/g, '/').replace(/^\//, '');
         }
         
@@ -418,7 +878,8 @@
             loading.style.display = 'none';
             content.style.display = 'block';
             
-            // Create home content safely
+            clearHighlights();
+            
             const homeHtml = `
                 <div class="home-content">
                     <h1>QMS Documentation Template</h1>
@@ -433,6 +894,10 @@
                             <div class="stat-number">${documents.productRequirements.length}</div>
                             <div class="stat-label">Product Requirements</div>
                         </div>
+                        <div class="stat">
+                            <div class="stat-number">${documents.softwareRequirements.length}</div>
+                            <div class="stat-label">Software Requirements</div>
+                        </div>
                     </div>
                     
                     <h2 style="margin-top: 50px;">Getting Started</h2>
@@ -442,15 +907,15 @@
                     <ul style="text-align: left; max-width: 600px; margin: 0 auto;">
                         <li><strong>User Needs:</strong> High-level requirements from the user's perspective</li>
                         <li><strong>Product Requirements:</strong> Detailed technical specifications that implement user needs</li>
+                        <li><strong>Software Requirements:</strong> Implementation-level requirements that realize product requirements</li>
                     </ul>
                     
                     <p style="text-align: left; max-width: 600px; margin: 20px auto;">
-                        Navigate using the sidebar to explore the documentation. Each requirement is traceable and includes related items for complete visibility.
+                        Navigate using the sidebar to explore the documentation. Each requirement is traceable and includes related items for complete visibility. Click on any requirement to see its associations highlighted.
                     </p>
                 </div>
             `;
             
-            // Sanitize before inserting
             content.innerHTML = DOMPurify.sanitize(homeHtml);
         }
         
@@ -458,29 +923,67 @@
         window.addEventListener('hashchange', () => {
             const hash = window.location.hash.slice(1);
             if (hash) {
-                loadDocument(hash);
-                // Find and activate corresponding nav link
-                const navLink = document.querySelector(`.nav-section a[href="#${hash}"]`);
-                if (navLink) setActiveLink(navLink);
+                // Determine type and ID from hash
+                let type, id;
+                if (hash.includes('user_needs')) {
+                    type = 'userNeeds';
+                } else if (hash.includes('product_requirements')) {
+                    type = 'productRequirements';
+                } else if (hash.includes('software_requirements')) {
+                    type = 'softwareRequirements';
+                }
+                
+                // Extract ID from path
+                const match = hash.match(/(UN|PRQ|SWR)-\d+/);
+                if (match) {
+                    id = match[0];
+                }
+                
+                loadDocument(hash, id, type);
+                const navLink = document.querySelector(`.nav-list a[href="#${hash}"]`);
+                if (navLink) {
+                    setActiveLink(navLink);
+                    if (id && type) {
+                        highlightAssociations(id, type);
+                    }
+                }
             } else {
                 showHome();
-                document.querySelectorAll('.nav-section a').forEach(a => a.classList.remove('active'));
+                document.querySelectorAll('.nav-list a').forEach(a => a.classList.remove('active'));
             }
         });
         
         // Initialize on load
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             console.log('Base URL detected:', baseUrl || '(none - local development)');
-            initNavigation();
+            await initNavigation();
             
             const hash = window.location.hash.slice(1);
             if (hash) {
-                loadDocument(hash);
-                // Find and activate corresponding nav link
-                const navLink = document.querySelector(`.nav-section a[href="#${hash}"]`);
-                if (navLink) setActiveLink(navLink);
-            } else {
-                showHome();
+                // Determine type and ID from hash
+                let type, id;
+                if (hash.includes('user_needs')) {
+                    type = 'userNeeds';
+                } else if (hash.includes('product_requirements')) {
+                    type = 'productRequirements';
+                } else if (hash.includes('software_requirements')) {
+                    type = 'softwareRequirements';
+                }
+                
+                // Extract ID from path
+                const match = hash.match(/(UN|PRQ|SWR)-\d+/);
+                if (match) {
+                    id = match[0];
+                }
+                
+                loadDocument(hash, id, type);
+                const navLink = document.querySelector(`.nav-list a[href="#${hash}"]`);
+                if (navLink) {
+                    setActiveLink(navLink);
+                    if (id && type) {
+                        highlightAssociations(id, type);
+                    }
+                }
             }
         });
     </script>
