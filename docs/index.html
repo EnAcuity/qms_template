@@ -296,6 +296,7 @@
                 </ul>
             </div>
             
+
             <div class="nav-section" id="productReqsSection">
                 <div class="nav-section-header" onclick="toggleSection('productReqsSection')">
                     <h3>Product Requirements</h3>
@@ -306,6 +307,7 @@
                 </ul>
             </div>
             
+
             <div class="nav-section" id="softwareReqsSection">
                 <div class="nav-section-header" onclick="toggleSection('softwareReqsSection')">
                     <h3>Software Requirements</h3>
@@ -333,6 +335,7 @@
             softwareRequirements: []
         };
         
+
         // Associations mapping
         const associations = {
             swrToPrq: {},  // SWR-001: PRQ-001
@@ -354,6 +357,7 @@
         
         const baseUrl = getBaseUrl();
         
+
         // Toggle section collapse
         function toggleSection(sectionId) {
             const section = document.getElementById(sectionId);
@@ -620,12 +624,14 @@
             populateNavList('userNeedsList', documents.userNeeds, 'userNeeds');
             populateNavList('productReqsList', documents.productRequirements, 'productRequirements');
             populateNavList('softwareReqsList', documents.softwareRequirements, 'softwareRequirements');
+
             
             // Show home content
             showHome();
         }
         
         // Populate a navigation list
+
         function populateNavList(listId, items, type) {
             const list = document.getElementById(listId);
             list.innerHTML = ''; // Clear loading message
@@ -639,6 +645,7 @@
                 return;
             }
             
+
             items.forEach(doc => {
                 const li = document.createElement('li');
                 const a = document.createElement('a');
@@ -838,6 +845,7 @@
                                 highlightAssociations(id, type);
                             }
                         }
+
                     };
                 }
             });
@@ -878,8 +886,10 @@
             loading.style.display = 'none';
             content.style.display = 'block';
             
+
             clearHighlights();
             
+
             const homeHtml = `
                 <div class="home-content">
                     <h1>QMS Documentation Template</h1>
@@ -923,6 +933,7 @@
         window.addEventListener('hashchange', () => {
             const hash = window.location.hash.slice(1);
             if (hash) {
+
                 // Determine type and ID from hash
                 let type, id;
                 if (hash.includes('user_needs')) {
@@ -947,6 +958,7 @@
                         highlightAssociations(id, type);
                     }
                 }
+
             } else {
                 showHome();
                 document.querySelectorAll('.nav-list a').forEach(a => a.classList.remove('active'));
@@ -960,6 +972,7 @@
             
             const hash = window.location.hash.slice(1);
             if (hash) {
+
                 // Determine type and ID from hash
                 let type, id;
                 if (hash.includes('user_needs')) {
@@ -984,6 +997,7 @@
                         highlightAssociations(id, type);
                     }
                 }
+
             }
         });
     </script>
