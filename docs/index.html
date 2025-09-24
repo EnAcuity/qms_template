@@ -6,6 +6,7 @@
     <title>QMS Documentation Template</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -18,6 +19,41 @@
             line-height: 1.6;
             color: #333;
             background-color: #f5f5f5;
+        }
+        
+        /* View Toggle Buttons */
+        .view-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .view-btn {
+            padding: 8px 20px;
+            border: 2px solid #3498db;
+            background: white;
+            color: #3498db;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .view-btn:hover {
+            background: #ecf0f1;
+        }
+        
+        .view-btn.active {
+            background: #3498db;
+            color: white;
         }
         
         .container {
@@ -149,6 +185,256 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
+        /* Table View Styles */
+        .table-view {
+            display: none;
+            width: 100%;
+            padding: 20px;
+            background: white;
+            overflow: auto;
+        }
+        
+        .table-view.active {
+            display: block;
+        }
+        
+        .table-controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .column-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .column-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .column-option input[type="checkbox"] {
+            cursor: pointer;
+        }
+        
+        .column-option label {
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .search-box input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 250px;
+        }
+        
+        .traceability-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .traceability-table thead {
+            background: #3498db;
+            color: white;
+        }
+        
+        .traceability-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .traceability-table tbody tr {
+            border-bottom: 1px solid #e0e0e0;
+            transition: background-color 0.2s;
+        }
+        
+        .traceability-table tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .traceability-table td {
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+        
+        .traceability-table .id-cell {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .traceability-table .name-cell {
+            color: #555;
+        }
+        
+        .traceability-table a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .traceability-table a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Dashboard View Styles */
+        .dashboard-view {
+            display: none;
+            width: 100%;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .dashboard-view.active {
+            display: block;
+        }
+        
+        .dashboard-header {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        
+        .dashboard-header h1 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .dashboard-header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .stat-label {
+            color: #7f8c8d;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .chart-container h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+        
+        .traceability-matrix {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        .traceability-matrix h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .matrix-table th,
+        .matrix-table td {
+            border: 1px solid #e0e0e0;
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .matrix-table thead th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .matrix-table tbody th {
+            background: #f8f9fa;
+            font-weight: 600;
+            text-align: left;
+        }
+        
+        .matrix-table .linked {
+            background: #d4edda;
+            color: #155724;
+            font-weight: bold;
+        }
+        
+        /* Document View */
+        .document-view {
+            display: block;
+        }
+        
+        .document-view.hidden {
+            display: none;
+        }
+        
         .traceability-info {
             background: #f8f9fa;
             border-left: 4px solid #3498db;
@@ -278,11 +564,28 @@
                 flex-direction: column;
                 gap: 20px;
             }
+            
+            .view-toggle {
+                position: static;
+                margin: 10px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- View Toggle Buttons -->
+    <div class="view-toggle">
+        <button class="view-btn active" onclick="switchView('document', this)">Document View</button>
+        <button class="view-btn" onclick="switchView('table', this)">Table View</button>
+        <button class="view-btn" onclick="switchView('dashboard', this)">Dashboard</button>
+    </div>
+    
+    <!-- Document View (Original) -->
+    <div class="container document-view">
         <div class="sidebar">
             <h2>QMS Documentation</h2>
             
@@ -296,7 +599,6 @@
                 </ul>
             </div>
             
-
             <div class="nav-section" id="productReqsSection">
                 <div class="nav-section-header" onclick="toggleSection('productReqsSection')">
                     <h3>Product Requirements</h3>
@@ -307,7 +609,6 @@
                 </ul>
             </div>
             
-
             <div class="nav-section" id="softwareReqsSection">
                 <div class="nav-section-header" onclick="toggleSection('softwareReqsSection')">
                     <h3>Software Requirements</h3>
@@ -326,6 +627,104 @@
             </div>
         </div>
     </div>
+    
+    <!-- Table View -->
+    <div class="table-view" id="tableView">
+        <div class="table-controls">
+            <div class="column-selector">
+                <div class="column-option">
+                    <input type="checkbox" id="col-un-id" checked>
+                    <label for="col-un-id">User Need ID</label>
+                </div>
+                <div class="column-option">
+                    <input type="checkbox" id="col-un-name" checked>
+                    <label for="col-un-name">User Need Name</label>
+                </div>
+                <div class="column-option">
+                    <input type="checkbox" id="col-prq-id" checked>
+                    <label for="col-prq-id">Product Req ID</label>
+                </div>
+                <div class="column-option">
+                    <input type="checkbox" id="col-prq-name" checked>
+                    <label for="col-prq-name">Product Req Name</label>
+                </div>
+                <div class="column-option">
+                    <input type="checkbox" id="col-swr-id" checked>
+                    <label for="col-swr-id">Software Req ID</label>
+                </div>
+                <div class="column-option">
+                    <input type="checkbox" id="col-swr-name" checked>
+                    <label for="col-swr-name">Software Req Name</label>
+                </div>
+                <div class="column-option">
+                    <input type="checkbox" id="col-category">
+                    <label for="col-category">Category</label>
+                </div>
+            </div>
+            <div class="search-box">
+                <label for="tableSearch">Search:</label>
+                <input type="text" id="tableSearch" placeholder="Search requirements...">
+            </div>
+        </div>
+        <div id="tableContent">
+            <table class="traceability-table">
+                <thead id="tableHead">
+                    <!-- Dynamic headers will be inserted here -->
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Dynamic rows will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Dashboard View -->
+    <div class="dashboard-view" id="dashboardView">
+        <div class="dashboard-header">
+            <h1>QMS Traceability Dashboard</h1>
+            <p>Overview of requirements and their traceability status</p>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="statUserNeeds">0</div>
+                <div class="stat-label">User Needs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statProductReqs">0</div>
+                <div class="stat-label">Product Requirements</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statSoftwareReqs">0</div>
+                <div class="stat-label">Software Requirements</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statCoverage">0%</div>
+                <div class="stat-label">Traceability Coverage</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h3>Requirements Distribution</h3>
+            <div class="chart-wrapper">
+                <canvas id="distributionChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h3>Traceability Coverage Analysis</h3>
+            <div class="chart-wrapper">
+                <canvas id="coverageChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="traceability-matrix">
+            <h3>Requirements Traceability Matrix</h3>
+            <div id="matrixContent">
+                <!-- Dynamic matrix will be inserted here -->
+            </div>
+        </div>
+    </div>
 
     <script>
         // Dynamic documents storage
@@ -335,7 +734,6 @@
             softwareRequirements: []
         };
         
-
         // Associations mapping
         const associations = {
             swrToPrq: {},  // SWR-001: PRQ-001
@@ -343,6 +741,10 @@
             prqToSwrs: {}, // PRQ-001: [SWR-001, SWR-002, ...]
             unToPrqs: {}   // UN-001: [PRQ-001, PRQ-008, ...]
         };
+        
+        // Current view state
+        let currentView = 'document';
+        let charts = {};
         
         // Get the base URL for the site (handles both local and GitHub Pages)
         function getBaseUrl() {
@@ -357,7 +759,334 @@
         
         const baseUrl = getBaseUrl();
         
-
+        // Switch between views - fixed to accept button element
+        function switchView(view, btn) {
+            currentView = view;
+            
+            // Update button states
+            document.querySelectorAll('.view-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            btn.classList.add('active');
+            
+            // Hide all views
+            document.querySelector('.document-view').classList.add('hidden');
+            document.querySelector('.table-view').classList.remove('active');
+            document.querySelector('.dashboard-view').classList.remove('active');
+            
+            // Show selected view
+            switch(view) {
+                case 'document':
+                    document.querySelector('.document-view').classList.remove('hidden');
+                    break;
+                case 'table':
+                    document.querySelector('.table-view').classList.add('active');
+                    updateTableView();
+                    break;
+                case 'dashboard':
+                    document.querySelector('.dashboard-view').classList.add('active');
+                    updateDashboard();
+                    break;
+            }
+        }
+        
+        // Update table view
+        function updateTableView() {
+            renderTable();
+        }
+        
+        // Render table with selected columns - with proper sanitization
+        function renderTable() {
+            const tableHead = document.getElementById('tableHead');
+            const tableBody = document.getElementById('tableBody');
+            
+            // Get selected columns
+            const columns = {
+                'un-id': document.getElementById('col-un-id').checked,
+                'un-name': document.getElementById('col-un-name').checked,
+                'prq-id': document.getElementById('col-prq-id').checked,
+                'prq-name': document.getElementById('col-prq-name').checked,
+                'swr-id': document.getElementById('col-swr-id').checked,
+                'swr-name': document.getElementById('col-swr-name').checked,
+                'category': document.getElementById('col-category').checked
+            };
+            
+            // Build headers
+            let headers = '<tr>';
+            if (columns['un-id']) headers += '<th>User Need ID</th>';
+            if (columns['un-name']) headers += '<th>User Need Name</th>';
+            if (columns['prq-id']) headers += '<th>Product Req ID</th>';
+            if (columns['prq-name']) headers += '<th>Product Req Name</th>';
+            if (columns['swr-id']) headers += '<th>Software Req ID</th>';
+            if (columns['swr-name']) headers += '<th>Software Req Name</th>';
+            if (columns['category']) headers += '<th>Category</th>';
+            headers += '</tr>';
+            tableHead.innerHTML = headers;
+            
+            // Build rows with traceability data - using DOM API for safety
+            tableBody.innerHTML = '';
+            const searchTerm = document.getElementById('tableSearch').value.toLowerCase();
+            
+            // Create traceability rows
+            documents.softwareRequirements.forEach(swr => {
+                const prqId = associations.swrToPrq[swr.id];
+                let prq = null;
+                let un = null;
+                
+                if (prqId) {
+                    prq = documents.productRequirements.find(p => p.id === prqId);
+                    const unId = associations.prqToUn[prqId];
+                    if (unId) {
+                        un = documents.userNeeds.find(u => u.id === unId);
+                    }
+                }
+                
+                // Apply search filter
+                const searchText = `${swr.id} ${swr.title} ${prq?.id || ''} ${prq?.title || ''} ${un?.id || ''} ${un?.title || ''}`.toLowerCase();
+                if (searchTerm && !searchText.includes(searchTerm)) {
+                    return;
+                }
+                
+                const row = document.createElement('tr');
+                
+                if (columns['un-id']) {
+                    const cell = document.createElement('td');
+                    cell.className = 'id-cell';
+                    if (un) {
+                        const link = document.createElement('a');
+                        link.href = `#${un.path}`;
+                        link.textContent = un.id;
+                        link.onclick = (evt) => navigateFromTable(evt, un.path, un.id, 'userNeeds');
+                        cell.appendChild(link);
+                    } else {
+                        cell.textContent = '-';
+                    }
+                    row.appendChild(cell);
+                }
+                
+                if (columns['un-name']) {
+                    const cell = document.createElement('td');
+                    cell.className = 'name-cell';
+                    cell.textContent = un ? un.title : '-';
+                    row.appendChild(cell);
+                }
+                
+                if (columns['prq-id']) {
+                    const cell = document.createElement('td');
+                    cell.className = 'id-cell';
+                    if (prq) {
+                        const link = document.createElement('a');
+                        link.href = `#${prq.path}`;
+                        link.textContent = prq.id;
+                        link.onclick = (evt) => navigateFromTable(evt, prq.path, prq.id, 'productRequirements');
+                        cell.appendChild(link);
+                    } else {
+                        cell.textContent = '-';
+                    }
+                    row.appendChild(cell);
+                }
+                
+                if (columns['prq-name']) {
+                    const cell = document.createElement('td');
+                    cell.className = 'name-cell';
+                    cell.textContent = prq ? prq.title : '-';
+                    row.appendChild(cell);
+                }
+                
+                if (columns['swr-id']) {
+                    const cell = document.createElement('td');
+                    cell.className = 'id-cell';
+                    const link = document.createElement('a');
+                    link.href = `#${swr.path}`;
+                    link.textContent = swr.id;
+                    link.onclick = (evt) => navigateFromTable(evt, swr.path, swr.id, 'softwareRequirements');
+                    cell.appendChild(link);
+                    row.appendChild(cell);
+                }
+                
+                if (columns['swr-name']) {
+                    const cell = document.createElement('td');
+                    cell.className = 'name-cell';
+                    cell.textContent = swr.title;
+                    row.appendChild(cell);
+                }
+                
+                if (columns['category']) {
+                    const cell = document.createElement('td');
+                    cell.textContent = swr.category || '-';
+                    row.appendChild(cell);
+                }
+                
+                tableBody.appendChild(row);
+            });
+            
+            if (tableBody.children.length === 0) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = 7;
+                cell.style.textAlign = 'center';
+                cell.style.color = '#999';
+                cell.textContent = 'No data available';
+                row.appendChild(cell);
+                tableBody.appendChild(row);
+            }
+        }
+        
+        // Navigate from table to document view - fixed event handling
+        function navigateFromTable(evt, path, id, type) {
+            evt.preventDefault();
+            // Switch to document view using the first button
+            const docBtn = document.querySelector('.view-btn');
+            switchView('document', docBtn);
+            loadDocument(path, id, type);
+            const navLink = document.querySelector(`.nav-list a[data-id="${id}"]`);
+            if (navLink) {
+                setActiveLink(navLink);
+                highlightAssociations(id, type);
+            }
+        }
+        
+        // Update dashboard
+        function updateDashboard() {
+            // Update statistics
+            document.getElementById('statUserNeeds').textContent = documents.userNeeds.length;
+            document.getElementById('statProductReqs').textContent = documents.productRequirements.length;
+            document.getElementById('statSoftwareReqs').textContent = documents.softwareRequirements.length;
+            
+            // Calculate coverage
+            const totalPrqs = documents.productRequirements.length;
+            const coveredPrqs = Object.keys(associations.prqToSwrs).length;
+            const coverage = totalPrqs > 0 ? Math.round((coveredPrqs / totalPrqs) * 100) : 0;
+            document.getElementById('statCoverage').textContent = `${coverage}%`;
+            
+            // Create distribution chart
+            createDistributionChart();
+            
+            // Create coverage chart
+            createCoverageChart();
+            
+            // Create traceability matrix
+            createTraceabilityMatrix();
+        }
+        
+        // Create distribution chart
+        function createDistributionChart() {
+            const ctx = document.getElementById('distributionChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (charts.distribution) {
+                charts.distribution.destroy();
+            }
+            
+            charts.distribution = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['User Needs', 'Product Requirements', 'Software Requirements'],
+                    datasets: [{
+                        data: [
+                            documents.userNeeds.length,
+                            documents.productRequirements.length,
+                            documents.softwareRequirements.length
+                        ],
+                        backgroundColor: ['#3498db', '#2ecc71', '#e74c3c'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create coverage chart
+        function createCoverageChart() {
+            const ctx = document.getElementById('coverageChart').getContext('2d');
+            
+            // Calculate coverage statistics
+            const unWithPrq = Object.keys(associations.unToPrqs).length;
+            const prqWithSwr = Object.keys(associations.prqToSwrs).length;
+            const totalUn = documents.userNeeds.length;
+            const totalPrq = documents.productRequirements.length;
+            
+            // Destroy existing chart if it exists
+            if (charts.coverage) {
+                charts.coverage.destroy();
+            }
+            
+            charts.coverage = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['User Needs → Product Reqs', 'Product Reqs → Software Reqs'],
+                    datasets: [{
+                        label: 'Covered',
+                        data: [unWithPrq, prqWithSwr],
+                        backgroundColor: '#2ecc71'
+                    }, {
+                        label: 'Not Covered',
+                        data: [totalUn - unWithPrq, totalPrq - prqWithSwr],
+                        backgroundColor: '#e74c3c'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create traceability matrix
+        function createTraceabilityMatrix() {
+            const matrixContent = document.getElementById('matrixContent');
+            
+            // Create matrix table
+            let matrixHtml = '<table class="matrix-table">';
+            matrixHtml += '<thead><tr><th>UN / PRQ</th>';
+            
+            // Add PRQ headers
+            documents.productRequirements.forEach(prq => {
+                matrixHtml += `<th>${prq.id}</th>`;
+            });
+            matrixHtml += '</tr></thead><tbody>';
+            
+            // Add UN rows
+            documents.userNeeds.forEach(un => {
+                matrixHtml += `<tr><th>${un.id}</th>`;
+                documents.productRequirements.forEach(prq => {
+                    const isLinked = associations.unToPrqs[un.id]?.includes(prq.id);
+                    matrixHtml += `<td class="${isLinked ? 'linked' : ''}">`;
+                    if (isLinked) {
+                        matrixHtml += '✓';
+                    }
+                    matrixHtml += '</td>';
+                });
+                matrixHtml += '</tr>';
+            });
+            
+            matrixHtml += '</tbody></table>';
+            matrixContent.innerHTML = DOMPurify.sanitize(matrixHtml);
+        }
+        
         // Toggle section collapse
         function toggleSection(sectionId) {
             const section = document.getElementById(sectionId);
@@ -377,6 +1106,10 @@
                 if (!response.ok) return;
                 
                 const content = await response.text();
+                
+                // Extract category
+                const categoryMatch = content.match(/## Category\s*\n(.+)/);
+                const category = categoryMatch ? categoryMatch[1].trim() : null;
                 
                 if (type === 'softwareRequirements') {
                     // Extract parent PRQ from SWR files
@@ -406,6 +1139,15 @@
                     if (swrMatches) {
                         associations.prqToSwrs[id] = swrMatches.map(match => match.slice(1, -1));
                     }
+                }
+                
+                // Store category in document
+                const docList = documents[type === 'userNeeds' ? 'userNeeds' : 
+                                         type === 'productRequirements' ? 'productRequirements' : 
+                                         'softwareRequirements'];
+                const doc = docList.find(d => d.id === id);
+                if (doc && category) {
+                    doc.category = category;
                 }
             } catch (error) {
                 console.error(`Failed to extract associations from ${path}:`, error);
@@ -470,7 +1212,7 @@
                 console.log('GitHub API not available, using pattern-based discovery');
             }
             
-            // Fallback: Try to discover files based on known patterns
+            // Fallback: Try to discover files based on known patterns - restored full list
             const patterns = {
                 'traceability/user_needs': ['UN-001', 'UN-002', 'UN-003', 'UN-004', 'UN-005'],
                 'traceability/product_requirements': ['PRQ-001', 'PRQ-002', 'PRQ-003', 'PRQ-004', 'PRQ-005', 'PRQ-006', 'PRQ-007', 'PRQ-008', 'PRQ-009', 'PRQ-010'],
@@ -624,14 +1366,12 @@
             populateNavList('userNeedsList', documents.userNeeds, 'userNeeds');
             populateNavList('productReqsList', documents.productRequirements, 'productRequirements');
             populateNavList('softwareReqsList', documents.softwareRequirements, 'softwareRequirements');
-
             
             // Show home content
             showHome();
         }
         
         // Populate a navigation list
-
         function populateNavList(listId, items, type) {
             const list = document.getElementById(listId);
             list.innerHTML = ''; // Clear loading message
@@ -645,7 +1385,6 @@
                 return;
             }
             
-
             items.forEach(doc => {
                 const li = document.createElement('li');
                 const a = document.createElement('a');
@@ -683,14 +1422,14 @@
                 if (prqId) {
                     const prq = documents.productRequirements.find(d => d.id === prqId);
                     if (prq) {
-                        html += `<li><strong>Parent Product Requirement:</strong> <a href="#${prq.path}" onclick="navigateToRequirement('${prq.path}', '${prq.id}', 'productRequirements')">${prqId}: ${prq.title}</a></li>`;
+                        html += `<li><strong>Parent Product Requirement:</strong> <a href="#${prq.path}" onclick="navigateToRequirement(event, '${prq.path}', '${prq.id}', 'productRequirements')">${prqId}: ${prq.title}</a></li>`;
                     }
                     
                     const unId = associations.prqToUn[prqId];
                     if (unId) {
                         const un = documents.userNeeds.find(d => d.id === unId);
                         if (un) {
-                            html += `<li><strong>Related User Need:</strong> <a href="#${un.path}" onclick="navigateToRequirement('${un.path}', '${un.id}', 'userNeeds')">${unId}: ${un.title}</a></li>`;
+                            html += `<li><strong>Related User Need:</strong> <a href="#${un.path}" onclick="navigateToRequirement(event, '${un.path}', '${un.id}', 'userNeeds')">${unId}: ${un.title}</a></li>`;
                         }
                     }
                 }
@@ -699,7 +1438,7 @@
                 if (unId) {
                     const un = documents.userNeeds.find(d => d.id === unId);
                     if (un) {
-                        html += `<li><strong>Parent User Need:</strong> <a href="#${un.path}" onclick="navigateToRequirement('${un.path}', '${un.id}', 'userNeeds')">${unId}: ${un.title}</a></li>`;
+                        html += `<li><strong>Parent User Need:</strong> <a href="#${un.path}" onclick="navigateToRequirement(event, '${un.path}', '${un.id}', 'userNeeds')">${unId}: ${un.title}</a></li>`;
                     }
                 }
                 
@@ -709,7 +1448,7 @@
                     swrs.forEach(swrId => {
                         const swr = documents.softwareRequirements.find(d => d.id === swrId);
                         if (swr) {
-                            html += `<li><a href="#${swr.path}" onclick="navigateToRequirement('${swr.path}', '${swr.id}', 'softwareRequirements')">${swrId}: ${swr.title}</a></li>`;
+                            html += `<li><a href="#${swr.path}" onclick="navigateToRequirement(event, '${swr.path}', '${swr.id}', 'softwareRequirements')">${swrId}: ${swr.title}</a></li>`;
                         }
                     });
                     html += '</ul></li>';
@@ -721,7 +1460,7 @@
                     prqs.forEach(prqId => {
                         const prq = documents.productRequirements.find(d => d.id === prqId);
                         if (prq) {
-                            html += `<li><a href="#${prq.path}" onclick="navigateToRequirement('${prq.path}', '${prq.id}', 'productRequirements')">${prqId}: ${prq.title}</a></li>`;
+                            html += `<li><a href="#${prq.path}" onclick="navigateToRequirement(event, '${prq.path}', '${prq.id}', 'productRequirements')">${prqId}: ${prq.title}</a></li>`;
                         }
                     });
                     html += '</ul></li>';
@@ -740,9 +1479,9 @@
             }
         }
         
-        // Navigate to a requirement
-        window.navigateToRequirement = function(path, id, type) {
-            event.preventDefault();
+        // Navigate to a requirement - fixed event handling
+        window.navigateToRequirement = function(evt, path, id, type) {
+            evt.preventDefault();
             loadDocument(path, id, type);
             const navLink = document.querySelector(`.nav-list a[data-id="${id}"]`);
             if (navLink) {
@@ -845,7 +1584,6 @@
                                 highlightAssociations(id, type);
                             }
                         }
-
                     };
                 }
             });
@@ -886,10 +1624,8 @@
             loading.style.display = 'none';
             content.style.display = 'block';
             
-
             clearHighlights();
             
-
             const homeHtml = `
                 <div class="home-content">
                     <h1>QMS Documentation Template</h1>
@@ -933,7 +1669,6 @@
         window.addEventListener('hashchange', () => {
             const hash = window.location.hash.slice(1);
             if (hash) {
-
                 // Determine type and ID from hash
                 let type, id;
                 if (hash.includes('user_needs')) {
@@ -958,21 +1693,27 @@
                         highlightAssociations(id, type);
                     }
                 }
-
             } else {
                 showHome();
                 document.querySelectorAll('.nav-list a').forEach(a => a.classList.remove('active'));
             }
         });
         
-        // Initialize on load
+        // Setup event listeners for table controls
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('Base URL detected:', baseUrl || '(none - local development)');
             await initNavigation();
             
+            // Setup column checkboxes
+            document.querySelectorAll('.column-option input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', renderTable);
+            });
+            
+            // Setup search
+            document.getElementById('tableSearch').addEventListener('input', renderTable);
+            
             const hash = window.location.hash.slice(1);
             if (hash) {
-
                 // Determine type and ID from hash
                 let type, id;
                 if (hash.includes('user_needs')) {
@@ -997,7 +1738,6 @@
                         highlightAssociations(id, type);
                     }
                 }
-
             }
         });
     </script>
